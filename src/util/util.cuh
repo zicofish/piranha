@@ -423,7 +423,9 @@ double averageShareRelativeError(Share<T, I> &result, Share<T, I> &expected, boo
     return total_error / result.size();
 }
 
-#if __CUDA_ARCH__ < 600
+// #if __CUDA_ARCH__ < 600
+// [zico] `uint64_t*` is not compatible with `unsigned long long int*`, so this overloaded function
+// doesn't exist in all compute capability, not just for `__CUDA_ARCH__ < 600`.
 __device__ uint64_t atomicAdd(uint64_t *address, uint64_t val);
-#endif
+// #endif
 

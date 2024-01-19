@@ -3,7 +3,7 @@ DEBUG_BINARY=piranha-debug
 BUILD_DIR=build
 DEBUG_DIR=debug
 
-CUDA_VERSION=11.5
+CUDA_VERSION=12.3
 CUTLASS_PATH=ext/cutlass
 
 CXX=/usr/local/cuda-$(CUDA_VERSION)/bin/nvcc
@@ -11,6 +11,8 @@ FLAGS := -Xcompiler="-O3,-w,-std=c++14,-pthread,-msse4.1,-maes,-msse2,-mpclmul,-
 DEBUG_FLAGS := -Xcompiler="-O0,-g,-w,-std=c++14,-pthread,-msse4.1,-maes,-msse2,-mpclmul,-fpermissive,-fpic,-pthread" -Xcudafe "--diag_suppress=declared_but_not_referenced"
 
 PIRANHA_FLAGS :=
+# [zico] Compiling for compute compability 86
+NVCC_FLAGS := -gencode arch=compute_86,code=sm_86
 
 VPATH             := src/:src/gpu:src/nn:src/mpc:src/util:src/test
 SRC_CPP_FILES     := $(wildcard src/*.cpp src/**/*.cpp)
@@ -37,13 +39,13 @@ $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 
 $(BINARY): $(BUILD_DIR) $(OBJ_FILES) 
-	$(CXX) $(FLAGS) $(PIRANHA_FLAGS) -o $@ $(OBJ_FILES) $(INCLUDES) $(LIBS)
+	$(CXX) $(FLAGS) $(PIRANHA_FLAGS) ${NVCC_FLAGS} -o $@ $(OBJ_FILES) $(INCLUDES) $(LIBS)
 
 $(BUILD_DIR)/%.o: %.cpp $(HEADER_FILES)
 	$(CXX) -dc $(FLAGS) $(PIRANHA_FLAGS) -c $< -o $@ $(OBJ_INCLUDES)
 
 $(BUILD_DIR)/%.o: %.cu $(HEADER_FILES)
-	$(CXX) -dc $(FLAGS) -Xcompiler="$(PIRANHA_FLAGS)" -c $< -o $@ $(OBJ_INCLUDES)
+	$(CXX) -dc $(FLAGS) -Xcompiler="$(PIRANHA_FLAGS)" ${NVCC_FLAGS} -c $< -o $@ $(OBJ_INCLUDES)
 
 $(DEBUG_DIR):
 	mkdir -p $(DEBUG_DIR)
@@ -55,7 +57,7 @@ $(DEBUG_DIR)/%.o: %.cpp $(HEADER_FILES)
 	$(CXX) -dc $(DEBUG_FLAGS) $(PIRANHA_FLAGS) -c $< -o $@ $(OBJ_INCLUDES)
 
 $(DEBUG_DIR)/%.o: %.cu $(HEADER_FILES)
-	$(CXX) -dc $(DEBUG_FLAGS) -Xcompiler="$(PIRANHA_FLAGS)" -c $< -o $@ $(OBJ_INCLUDES)
+	$(CXX) -dc $(DEBUG_FLAGS) -Xcompiler="$(PIRANHA_FLAGS)" ${NVCC_FLAGS} -c $< -o $@ $(OBJ_INCLUDES)
 
 clean:
 	rm -rf $(BINARY)
